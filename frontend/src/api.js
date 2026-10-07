@@ -82,6 +82,7 @@ export const api = {
   cancel: (id, comment) => request('POST', `${MA}/${id}/cancel/`, { comment }),
   history: (id) => request('GET', `${MA}/${id}/history/`),
   pdfUrl: (id) => `${MA}/${id}/conclusion.pdf`,
+  regeneratePdf: (id) => request('POST', `${MA}/${id}/regenerate-pdf/`),
 
   kpRequest: (token) => request('GET', `/api/kp-responses/${token}/`),
   kpRespond: (token, formData) => request('POST', `/api/kp-responses/${token}/`, formData),

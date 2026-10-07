@@ -66,6 +66,12 @@ def test_pdf_failure_does_not_roll_back_approval(world):
     assert analysis.status == Status.APPROVED and analysis.pdf_status == PdfStatus.FAILED
     r = client_for(w.marketer).get(f"/api/marketing-analyses/{aid}/conclusion.pdf")
     assert r.status_code == 409 and r.data["pdf_status"] == PdfStatus.FAILED
+    # повторный запуск — только администратор и только после ошибки
+    assert client_for(w.marketer).post(f"/api/marketing-analyses/{aid}/regenerate-pdf/").status_code == 403
+    assert "regenerate_pdf" in client_for(w.admin).get(f"/api/marketing-analyses/{aid}/").data["available_actions"]
+    r = client_for(w.admin).post(f"/api/marketing-analyses/{aid}/regenerate-pdf/")
+    assert r.status_code == 200 and r.data["pdf_status"] == PdfStatus.READY
+    assert client_for(w.admin).post(f"/api/marketing-analyses/{aid}/regenerate-pdf/").status_code == 409
 
 
 @pytest.mark.django_db

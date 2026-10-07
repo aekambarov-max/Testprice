@@ -1,0 +1,42 @@
+# Тестовый стенд / on-premise. Секреты задаются в .env (см. .env.example).
+services:
+  db:
+    image: postgres:17.2
+    environment:
+      POSTGRES_DB: price
+      POSTGRES_USER: price
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?задайте POSTGRES_PASSWORD в .env}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U price"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+
+  backend: &backend
+    build: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://price:${POSTGRES_PASSWORD}@db:5432/price
+      CELERY_BROKER_URL: redis://redis:6379/0
+      REDIS_CACHE_URL: redis://redis:6379/1
+      CELERY_TASK_ALWAYS_EAGER: "false"
+    volumes: [media:/data/media]
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_started}
+
+  worker:
+    <<: *backend
+    command: celery -A config worker -l info --concurrency 2
+
+  frontend:
+    build: ./frontend
+    ports: ["${HTTP_PORT:-8080}:80"]
+    depends_on: [backend]
+
+volumes:
+  pgdata:
+  media:

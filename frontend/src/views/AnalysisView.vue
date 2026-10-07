@@ -18,7 +18,10 @@
       <div v-if="analysis" class="row">
         <template v-if="analysis.status === 'approved'">
           <a v-if="analysis.pdf_status === 'ready'" class="btn primary" :href="api.pdfUrl(analysis.id)" :download="analysis.pdf_name" data-test="pdf">⬇ {{ $t('card.pdf') }}</a>
-          <span v-else-if="analysis.pdf_status === 'failed'" class="alert error small">{{ $t('card.pdfFailed') }}</span>
+          <template v-else-if="analysis.pdf_status === 'failed'">
+            <span class="alert error small">{{ $t('card.pdfFailed') }}</span>
+            <button v-if="can('regenerate_pdf')" class="btn" @click="act(() => api.regeneratePdf(analysis.id))">{{ $t('card.regeneratePdf') }}</button>
+          </template>
           <span v-else class="muted"><span class="spinner" /> {{ $t('card.pdfPending') }}</span>
         </template>
         <button v-if="can('start_collecting')" class="btn" @click="act(() => api.startCollecting(analysis.id))">{{ $t('card.startCollecting') }}</button>

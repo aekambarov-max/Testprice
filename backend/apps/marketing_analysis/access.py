@@ -64,4 +64,6 @@ def available_actions(user, analysis, step=None):
             actions += ["approve", "rework"]
     if analysis.status == Status.APPROVED:
         actions.append("download_pdf")
+        if roles.is_admin(user) and analysis.pdf_status == "failed":
+            actions.append("regenerate_pdf")
     return actions

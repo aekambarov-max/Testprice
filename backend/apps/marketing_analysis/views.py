@@ -1,11 +1,13 @@
 from urllib.parse import quote
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Count, OuterRef, Q, Subquery
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
@@ -15,7 +17,7 @@ from apps.core.models import AuditLog
 from apps.core.services import audit, translit
 
 from . import access, services, workflow
-from .models import ON_APPROVAL_STATUSES, ApprovalStep, MarketingAnalysisItem, PdfStatus, Status
+from .models import ON_APPROVAL_STATUSES, ApprovalStep, MarketingAnalysis, MarketingAnalysisItem, PdfStatus, Status
 from .serializers import (
     AnalysisDetailSerializer,
     AnalysisListSerializer,
@@ -261,6 +263,23 @@ class MarketingAnalysisViewSet(viewsets.ViewSet):
                                          ).select_related("user__profile").order_by("created_at", "id")
         return Response({"steps": StepSerializer(steps, many=True).data,
                          "events": HistoryAuditSerializer(events, many=True).data})
+
+    @action(detail=True, methods=["post"], url_path="regenerate-pdf")
+    def regenerate_pdf(self, request, pk=None):
+        """Повторный запуск формирования заключения после исчерпания автоматических попыток (администратор)."""
+        analysis = self._get(pk)
+        if not roles.is_admin(request.user):
+            raise PermissionDenied()
+        updated = MarketingAnalysis.objects.filter(pk=analysis.pk, status=Status.APPROVED,
+                                                   pdf_status=PdfStatus.FAILED).update(pdf_status=PdfStatus.PENDING)
+        if not updated:
+            raise BusinessError("pdf_not_failed", "Повторное формирование доступно только после ошибки",
+                                status_code=status.HTTP_409_CONFLICT)
+        audit(analysis, "pdf_regenerate_requested", request=request)
+        from .tasks import generate_conclusion_pdf
+
+        transaction.on_commit(lambda: generate_conclusion_pdf.delay(analysis.pk))
+        return self._detail(analysis.pk)
 
     @action(detail=True, methods=["get"], url_path="conclusion.pdf")
     def conclusion(self, request, pk=None):
