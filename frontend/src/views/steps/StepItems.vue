@@ -52,7 +52,8 @@
             </td>
             <td>
               <div v-for="att in item.attachments" :key="att.id" class="att">
-                <a :href="api.attachmentUrl(analysis.id, item.id, att.id)">{{ att.original_name }}</a>
+                <a v-if="api.attachmentUrl(analysis.id, item.id, att.id)" :href="api.attachmentUrl(analysis.id, item.id, att.id)">{{ att.original_name }}</a>
+                <span v-else>{{ att.original_name }}</span>
                 <button v-if="editable" class="icon-btn" @click="removeAttachment(item, att)">✕</button>
               </div>
               <FileInput v-if="editable" :label="$t('items.attach')" :show-name="false" @change="(f) => upload(item, f)" />

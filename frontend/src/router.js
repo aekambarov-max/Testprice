@@ -1,4 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createMemoryHistory, createRouter, createWebHistory } from 'vue-router'
+import { DEMO } from './demo/flag'
 import { loadSession, session } from './store'
 
 const routes = [
@@ -14,7 +15,7 @@ const routes = [
   { path: '/analytics', component: () => import('./views/PlaceholderView.vue'), meta: { section: 'menu.analytics' } },
 ]
 
-export const router = createRouter({ history: createWebHistory(), routes })
+export const router = createRouter({ history: DEMO ? createMemoryHistory() : createWebHistory(), routes })
 
 router.beforeEach(async (to) => {
   if (to.meta.public) return true

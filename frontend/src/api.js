@@ -1,4 +1,5 @@
 // Обёртка над fetch: сессия Django + CSRF, единый формат ошибок {code, detail, errors}.
+import { DEMO } from './demo/flag'
 
 function csrfToken() {
   const m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/)
@@ -16,6 +17,15 @@ export class ApiError extends Error {
 }
 
 export async function request(method, url, body, { raw = false } = {}) {
+  if (DEMO) {
+    const { handle } = await import('./demo/mockServer')
+    try {
+      return await handle(method, url, body)
+    } catch (e) {
+      if (e.status) throw new ApiError(e.status, e.data)
+      throw e
+    }
+  }
   const opts = { method, credentials: 'same-origin', headers: { 'X-CSRFToken': csrfToken() } }
   if (body instanceof FormData) {
     opts.body = body
@@ -66,10 +76,10 @@ export const api = {
     return request('POST', `${MA}/${id}/items/${itemId}/attachments/`, fd)
   },
   deleteAttachment: (id, itemId, attId) => request('DELETE', `${MA}/${id}/items/${itemId}/attachments/${attId}/`),
-  attachmentUrl: (id, itemId, attId) => `${MA}/${id}/items/${itemId}/attachments/${attId}/`,
+  attachmentUrl: (id, itemId, attId) => (DEMO ? null : `${MA}/${id}/items/${itemId}/attachments/${attId}/`),
   addOffer: (id, formData) => request('POST', `${MA}/${id}/offers/`, formData),
   deleteOffer: (id, offerId) => request('DELETE', `${MA}/${id}/offers/${offerId}/`),
-  offerUrl: (id, offerId) => `${MA}/${id}/offers/${offerId}/`,
+  offerUrl: (id, offerId) => (DEMO ? null : `${MA}/${id}/offers/${offerId}/`),
   requestKp: (id, suppliers, message) => request('POST', `${MA}/${id}/request-kp/`, { suppliers, message }),
   startCollecting: (id) => request('POST', `${MA}/${id}/start-collecting/`),
   calculate: (id) => request('POST', `${MA}/${id}/calculate/`),

@@ -17,7 +17,10 @@
       </div>
       <div v-if="analysis" class="row">
         <template v-if="analysis.status === 'approved'">
-          <a v-if="analysis.pdf_status === 'ready'" class="btn primary" :href="api.pdfUrl(analysis.id)" :download="analysis.pdf_name" data-test="pdf">⬇ {{ $t('card.pdf') }}</a>
+          <template v-if="analysis.pdf_status === 'ready'">
+            <button v-if="DEMO" class="btn primary" data-test="pdf" @click="previewOpen = true">{{ $t('card.pdf') }}</button>
+            <a v-else class="btn primary" :href="api.pdfUrl(analysis.id)" :download="analysis.pdf_name" data-test="pdf">⬇ {{ $t('card.pdf') }}</a>
+          </template>
           <template v-else-if="analysis.pdf_status === 'failed'">
             <span class="alert error small">{{ $t('card.pdfFailed') }}</span>
             <button v-if="can('regenerate_pdf')" class="btn" @click="act(() => api.regeneratePdf(analysis.id))">{{ $t('card.regeneratePdf') }}</button>
@@ -25,7 +28,7 @@
           <span v-else class="muted"><span class="spinner" /> {{ $t('card.pdfPending') }}</span>
         </template>
         <button v-if="can('start_collecting')" class="btn" @click="act(() => api.startCollecting(analysis.id))">{{ $t('card.startCollecting') }}</button>
-        <button v-if="can('delete')" class="btn danger" @click="removeDraft">{{ $t('card.deleteDraft') }}</button>
+        <button v-if="can('delete')" class="btn danger" @click="deleteOpen = true">{{ $t('card.deleteDraft') }}</button>
         <button v-else-if="can('cancel')" class="btn danger" @click="cancelOpen = true">{{ $t('card.cancelAnalysis') }}</button>
       </div>
     </div>
@@ -69,6 +72,19 @@
       </aside>
     </div>
 
+    <Modal :open="deleteOpen" :title="$t('card.deleteDraft')" @close="deleteOpen = false">
+      <p>{{ $t('card.deleteConfirm') }}</p>
+      <template #footer>
+        <button class="btn" @click="deleteOpen = false">{{ $t('common.cancel') }}</button>
+        <button class="btn danger" @click="removeDraft">{{ $t('common.delete') }}</button>
+      </template>
+    </Modal>
+
+    <Modal v-if="DEMO && analysis" :open="previewOpen" :title="analysis.pdf_name" width="1000px" @close="previewOpen = false">
+      <p class="alert info small">{{ $t('card.demoPdfNote') }}</p>
+      <ConclusionPreview :analysis="analysis" />
+    </Modal>
+
     <Modal :open="cancelOpen" :title="$t('card.cancelAnalysis')" @close="cancelOpen = false">
       <p>{{ $t('card.cancelConfirm') }}</p>
       <div class="field"><label>{{ $t('card.cancelReason') }}</label><textarea v-model="cancelReason" class="input" /></div>
@@ -85,6 +101,8 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '../api'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
+import ConclusionPreview from '../components/ConclusionPreview.vue'
+import { DEMO } from '../demo/flag'
 import DecisionPanel from '../components/DecisionPanel.vue'
 import ErrorAlert from '../components/ErrorAlert.vue'
 import Modal from '../components/Modal.vue'
@@ -111,6 +129,8 @@ const sideTab = ref('route')
 const history = ref(null)
 const cancelOpen = ref(false)
 const cancelReason = ref('')
+const deleteOpen = ref(false)
+const previewOpen = ref(false)
 let pdfTimer = null
 
 const can = (a) => !!analysis.value && analysis.value.available_actions.includes(a)
@@ -202,7 +222,7 @@ async function cancelAnalysis() {
 }
 
 async function removeDraft() {
-  if (!window.confirm(t('card.deleteConfirm'))) return
+  deleteOpen.value = false
   try { await api.remove(analysis.value.id); router.push('/marketing-analyses') } catch (e) { actionError.value = e }
 }
 

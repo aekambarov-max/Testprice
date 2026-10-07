@@ -100,4 +100,5 @@ onMounted(loadNotifications)
 .notif:hover { background: var(--price-blue-lighter); }
 .notif.unread b::before { content: '●'; color: var(--price-blue); margin-right: 6px; font-size: 10px; }
 @media (max-width: 1100px) { .nav { display: none; } .user-name { display: none; } }
+@media (max-width: 600px) { .bar { gap: 12px; } .logo-text small { display: none; } }
 </style>

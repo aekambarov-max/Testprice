@@ -28,7 +28,8 @@
         <tbody>
           <tr v-for="offer in analysis.offers" :key="offer.id">
             <td>{{ offer.supplier_name }}<span class="sub">{{ offer.supplier_bin }} · {{ offer.source === 'system' ? $t('offers.sourceSystem') : $t('offers.sourceManual') }}</span>
-              <a :href="api.offerUrl(analysis.id, offer.id)" class="small file-link">📄 {{ offer.original_name }}</a></td>
+              <a v-if="api.offerUrl(analysis.id, offer.id)" :href="api.offerUrl(analysis.id, offer.id)" class="small file-link">{{ offer.original_name }}</a>
+              <span v-else class="small file-link muted">{{ offer.original_name }}</span></td>
             <td class="nowrap">{{ date(offer.offer_date) }}</td>
             <td class="nowrap">{{ offer.currency }}, {{ offer.vat_included ? $t('offers.withVat') : $t('offers.withoutVat') }}
               <span v-if="offer.currency !== 'KZT'" class="sub">{{ offer.exchange_rate }}</span></td>

@@ -46,6 +46,7 @@ const bars = computed(() => {
 .fill.min { background: var(--price-blue); }
 .marker { position: absolute; top: -4px; bottom: -4px; border-left: 2px dashed; }
 .bar-value { text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; }
+@media (max-width: 600px) { .bar-row { grid-template-columns: 96px minmax(0, 1fr) 92px; gap: 6px; } }
 .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 6px; }
 .legend i { display: inline-block; width: 0; height: 12px; border-left: 2px dashed; margin-right: 6px; vertical-align: middle; }
 </style>
