@@ -1,0 +1,107 @@
+{% load humanize_money %}<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Маркетинговое заключение {{ analysis.number }}</title>
+<style>
+  @font-face { font-family: "PriceSans"; src: url("{{ fonts_dir }}/DejaVuSans.ttf"); }
+  @font-face { font-family: "PriceSans"; font-weight: bold; src: url("{{ fonts_dir }}/DejaVuSans-Bold.ttf"); }
+  @page {
+    size: A4 landscape; margin: 14mm 12mm 16mm 12mm;
+    @bottom-right { content: "Стр. " counter(page) " из " counter(pages); font-family: "PriceSans"; font-size: 7.5pt; color: #6b7a90; }
+    @bottom-left { content: "{{ analysis.number }}"; font-family: "PriceSans"; font-size: 7.5pt; color: #6b7a90; }
+  }
+  body { font-family: "PriceSans"; font-size: 8.5pt; color: #1b2433; }
+  header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0B4EA2; padding-bottom: 6px; }
+  header img { height: 34px; }
+  header .meta { text-align: right; font-size: 8pt; color: #44536b; }
+  h1 { font-size: 14pt; text-align: center; margin: 12px 0 2px; color: #0B4EA2; }
+  .subtitle { text-align: center; margin-bottom: 10px; }
+  h2 { font-size: 10pt; margin: 14px 0 5px; color: #0B4EA2; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #b9c6d8; padding: 3px 4px; vertical-align: top; }
+  th { background: #e8f0fb; font-weight: bold; text-align: center; }
+  td.num { text-align: right; white-space: nowrap; }
+  td.c { text-align: center; }
+  .info td { border: none; padding: 1px 4px; }
+  .info td:first-child { color: #44536b; width: 32%; }
+  tr.total td { font-weight: bold; background: #f3f7fd; }
+  .final { margin-top: 8px; padding: 6px 8px; border: 1px solid #0B4EA2; background: #f3f7fd; }
+  .keep { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+<header>
+  <img src="{{ logo }}" alt="КМГ">
+  <div class="meta">ИС «Price» · Маркетинг цен<br>Документ сформирован автоматически</div>
+</header>
+
+<h1>МАРКЕТИНГОВОЕ ЗАКЛЮЧЕНИЕ № {{ analysis.number }}</h1>
+<div class="subtitle">от {{ approved_at|date:"d.m.Y" }}</div>
+
+<table class="info">
+  <tr><td>ДЗО</td><td>{{ analysis.dzo.name_ru }}</td></tr>
+  <tr><td>Инициатор потребности</td><td>{{ analysis.initiator_display }}{% if analysis.initiator_position %}, {{ analysis.initiator_position }}{% endif %}{% if analysis.initiator_department %} ({{ analysis.initiator_department }}){% endif %}</td></tr>
+  <tr><td>Маркетолог (ответственный за маркетинг цен ДЗО)</td><td>{{ author_name }}{% if author_position %}, {{ author_position }}{% endif %}</td></tr>
+  <tr><td>Методика расчёта маркетинговой цены</td><td>{{ calc_method }}; цены приведены к KZT по курсу НБ РК на дату КП, без НДС ({{ vat_rate }}%)</td></tr>
+</table>
+
+<h2>1. Позиции</h2>
+<table>
+  <thead><tr>
+    <th>№</th><th>Код АСУ НСИ</th><th>Код ЕНС ТРУ</th><th>Наименование</th><th>Ед. изм.</th><th>Кол-во</th>
+    <th>Маркетинговая цена за ед. без НДС, KZT</th><th>Сумма без НДС, KZT</th>
+  </tr></thead>
+  <tbody>
+  {% for item in items %}
+    <tr>
+      <td class="c">{{ item.line_no }}</td><td>{{ item.nsi_code }}</td><td>{{ item.enstru_code }}</td>
+      <td>{{ item.name }}{% if item.characteristics %}<br><span style="color:#5b6b82">{{ item.characteristics }}</span>{% endif %}</td>
+      <td class="c">{{ item.unit }}</td><td class="num">{{ item.quantity|money:3 }}</td>
+      <td class="num">{{ item.marketing_price|money }}</td><td class="num">{{ item.total_wo_vat|money }}</td>
+    </tr>
+  {% endfor %}
+    <tr class="total"><td colspan="7">Итого без НДС, KZT</td><td class="num">{{ analysis.total_wo_vat|money }}</td></tr>
+  </tbody>
+</table>
+
+<h2>2. Коммерческие предложения</h2>
+<table>
+  <thead><tr>
+    <th>Поставщик</th><th>БИН</th><th>Дата КП</th><th>Позиция</th><th>Цена за ед.</th><th>Валюта</th>
+    <th>НДС</th><th>Курс НБ РК</th><th>Цена за ед. KZT без НДС</th>
+  </tr></thead>
+  <tbody>
+  {% for offer in offers %}{% for price in offer.prices.all %}
+    <tr>
+      <td>{{ offer.supplier_name }}</td><td class="c">{{ offer.supplier_bin }}</td><td class="c">{{ offer.offer_date|date:"d.m.Y" }}</td>
+      <td>{{ price.item.line_no }}. {{ price.item.name }}</td><td class="num">{{ price.price|money }}</td>
+      <td class="c">{{ offer.currency }}</td><td class="c">{% if offer.vat_included %}с НДС{% else %}без НДС{% endif %}</td>
+      <td class="num">{{ offer.exchange_rate|money:4 }}</td><td class="num">{{ price.price_kzt_wo_vat|money }}</td>
+    </tr>
+  {% endfor %}{% endfor %}
+  </tbody>
+</table>
+
+<h2>3. Итоговая сумма и обоснование цены</h2>
+<p><b>Итоговая сумма без НДС: {{ analysis.total_wo_vat|money }} KZT.</b></p>
+{% if analysis.price_justification %}<p>{{ analysis.price_justification|linebreaksbr }}</p>{% endif %}
+{% for item in items %}{% if item.price_justification %}<p>Позиция {{ item.line_no }}: {{ item.price_justification|linebreaksbr }}</p>{% endif %}{% endfor %}
+
+<div class="keep">
+<h2>4. Лист согласования</h2>
+<table>
+  <thead><tr><th>Этап</th><th>ФИО</th><th>Должность</th><th>Решение</th><th>Дата и время</th><th>Комментарий</th></tr></thead>
+  <tbody>
+  {% for row in approval_rows %}
+    <tr><td>{{ row.stage }}</td><td>{{ row.name }}</td><td>{{ row.position }}</td><td class="c">{{ row.decision }}</td>
+      <td class="c">{{ row.decided_at|date:"d.m.Y H:i" }}</td><td>{{ row.comment }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% if final %}
+<div class="final"><b>УТВЕРЖДЕНО:</b> {{ final.position }} {{ final.name }} — {{ final.decided_at|date:"d.m.Y H:i" }}</div>
+{% endif %}
+</div>
+</body>
+</html>

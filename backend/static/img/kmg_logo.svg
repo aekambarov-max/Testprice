@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40" viewBox="0 0 120 40">
+  <!-- Заглушка. TODO(PO): заменить официальным логотипом АО НК «КазМунайГаз» из брендбука. -->
+  <rect x="0" y="0" width="40" height="40" rx="6" fill="#0B4EA2"/>
+  <text x="20" y="26" font-family="DejaVu Sans" font-size="13" font-weight="bold" fill="#fff" text-anchor="middle">KMG</text>
+  <text x="48" y="17" font-family="DejaVu Sans" font-size="9" fill="#0B4EA2">АО НК</text>
+  <text x="48" y="30" font-family="DejaVu Sans" font-size="9" font-weight="bold" fill="#0B4EA2">«КазМунайГаз»</text>
+</svg>
