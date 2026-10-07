@@ -1,0 +1,24 @@
+/* Дизайн-токены Price. Цвета подобраны под визуальный язык price.kmg.kz.
+   TODO(PO): сверить фирменный синий и шрифт с брендбуком/исходниками действующего портала. */
+:root {
+  --price-blue: #1a5dab;
+  --price-blue-dark: #134a8a;
+  --price-blue-light: #e8f1fc;
+  --price-blue-lighter: #f3f8fe;
+  --bg: #f3f6fa;
+  --surface: #ffffff;
+  --border: #dbe3ee;
+  --text: #1d2939;
+  --text-muted: #667085;
+  --success: #12805c;
+  --success-bg: #e7f6ef;
+  --warning: #b54708;
+  --warning-bg: #fef4e6;
+  --danger: #c4320a;
+  --danger-bg: #fdecea;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+  --font: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --container: 1320px;
+}

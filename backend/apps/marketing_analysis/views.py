@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from apps.core import roles
 from apps.core.exceptions import BusinessError
 from apps.core.models import AuditLog
-from apps.core.services import audit
+from apps.core.services import audit, translit
 
 from . import access, services, workflow
 from .models import ON_APPROVAL_STATUSES, ApprovalStep, MarketingAnalysisItem, PdfStatus, Status
@@ -48,7 +48,8 @@ def _file_response(file_field, filename):
     if not file_field:
         raise Http404()
     response = FileResponse(file_field.open("rb"), as_attachment=True)
-    response["Content-Disposition"] = f"attachment; filename*=UTF-8''{quote(filename)}"
+    ascii_name = translit(filename).encode("ascii", "ignore").decode() or "document"
+    response["Content-Disposition"] = f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(filename)}"
     return response
 
 

@@ -14,8 +14,17 @@ from .serializers import DzoSerializer, MeSerializer, NotificationSerializer, Us
 
 
 def _me_payload(request):
-    data = MeSerializer(request.user).data if request.user.is_authenticated else None
-    return {"user": data, "features": {"marketing_analysis": settings.MA_ENABLED}}
+    user = request.user
+    data = MeSerializer(user).data if user.is_authenticated else None
+    features = {"marketing_analysis": settings.MA_ENABLED, "marketing_analysis_participant": False}
+    if data and settings.MA_ENABLED:
+        from apps.marketing_analysis.models import AnalysisApprover, ApprovalStep
+
+        # Согласующий ДЗО — не роль: пункт меню показываем тем, кто участвует хотя бы в одном маршруте.
+        features["marketing_analysis_participant"] = (
+            AnalysisApprover.objects.filter(user=user).exists() or ApprovalStep.objects.filter(assignee_user=user).exists()
+        )
+    return {"user": data, "features": features}
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")

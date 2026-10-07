@@ -12,6 +12,26 @@ from .models import AuditLog, CurrencyRate, NumberSequence
 logger = logging.getLogger(__name__)
 
 
+_TRANSLIT = dict(zip(
+    "абвгдеёжзийклмнопрстуфхцчшщъыьэюяәғқңөұүһі",
+    ["a", "b", "v", "g", "d", "e", "e", "zh", "z", "i", "i", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u", "f",
+     "kh", "ts", "ch", "sh", "shch", "", "y", "", "e", "iu", "ia", "a", "g", "q", "n", "o", "u", "u", "h", "i"],
+))
+
+
+def translit(text):
+    """Транслитерация кириллицы (рус./каз.) для ASCII-имени файла в Content-Disposition."""
+    out = []
+    for ch in text:
+        low = ch.lower()
+        if low in _TRANSLIT:
+            rep = _TRANSLIT[low]
+            out.append(rep.capitalize() if ch != low else rep)
+        else:
+            out.append(ch)
+    return "".join(out)
+
+
 def client_ip(request):
     if request is None:
         return None

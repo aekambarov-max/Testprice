@@ -146,3 +146,11 @@ def test_status_tabs_filters(world):
     assert ids(w.marketer, nsi_code="1010") == {aid}
     assert ids(w.marketer, nsi_code="9999") == set()
     assert Status.CANCELLED == client_for(w.marketer).get(f"/api/marketing-analyses/{aid}/").data["status"]
+
+
+def test_menu_flag_for_dzo_approver(world):
+    w = world
+    assert client_for(w.approver1).get("/api/auth/me/").data["features"]["marketing_analysis_participant"] is False
+    create_analysis(w)
+    assert client_for(w.approver1).get("/api/auth/me/").data["features"]["marketing_analysis_participant"] is True
+    assert client_for(w.outsider).get("/api/auth/me/").data["features"]["marketing_analysis_participant"] is False
